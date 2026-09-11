@@ -45,7 +45,7 @@ for recursions with overlapping subproblems (e.g. Fibonacci).
 | Method | Completes? | Time |
 |---|---|---|
 | Method 1 (2**n) | Yes | ~0.01 sec |
-| Method 2a (f(n-1)+f(n-1)) | No — timeout, still not done after 5 sec | — |
+| Method 2a (f(n-1)+f(n-1)) | No timeout, still not done after 5 sec | — |
 | Method 2b (2*f(n-1)) | Yes | ~0.005 sec |
 | Method 3 (recursion + table) | Yes | ~0.003 sec |
 
