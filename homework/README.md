@@ -2,6 +2,11 @@
 
 > This README was created with the help of Claude AI.
 
+Name: 洪偉升
+Department: 資訊工程學系
+Student ID: 111310523
+Class: Introduction to Algorithms 
+
 ## Assignment
 
 Implement `power2n(n)` to compute 2 to the power of n, and compare the following four
