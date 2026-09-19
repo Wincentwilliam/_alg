@@ -71,7 +71,7 @@ method is fastest or which one times out.)
   table doesn't help *for this specific problem*, but it illustrates how
   memoization a common optimization technique is written.
 
-  ---
+---
 
 # Homework 2: Solving Recurrence Relations
 
@@ -253,4 +253,4 @@ The shape of a recurrence tells you a lot before you even solve it:
 - **T(n/2)** (only halves, no branching) + constant work → usually
   **O(log n)** (very fast)
 
-  ---
+---
