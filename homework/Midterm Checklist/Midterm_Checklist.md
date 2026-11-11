@@ -16,7 +16,7 @@ link inside the `()`, or leave it if the teacher already recorded it.
 | 1 | 查表法 | 是 | | | [week1] |
 | 2 | 複雜度 | 是 | | | [week2] |
 | 3 | 列舉＋暴力 | 是 | | | [week3] |
-| 4 | 迭代法 | 是 | | | [week4] |
+| 4 | 迭代法 | 否 | 是 | [證明]() | [week4] |
 | 5 | 遞迴，函數式編程 | 是 | | | [week5] |
 | 6 | Lambda Calculus | 是 | | | [week6] |
 | 7 | 動態規劃與文字算法 | 是 | | | [week7] |
@@ -33,19 +33,19 @@ link inside the `()`, or leave it if the teacher already recorded it.
 [week8]: https://github.com/Wincentwilliam/_alg/tree/main/homework/08
 [week9]: https://github.com/Wincentwilliam/_alg/tree/main/homework/09
 
-## 2. Homework status (files found on GitHub)
+## 2. Homework status (every file is a working link)
 
-| Week | Topic | Files in the folder | Status |
+| Week | Topic | Files in the folder (click to open) | Status |
 |---|---|---|---|
-| [1](https://github.com/Wincentwilliam/_alg/tree/main/homework/01) | Lookup table / power2n | `power2n.py`, `Readme.md` | done |
-| [2](https://github.com/Wincentwilliam/_alg/tree/main/homework/02) | Complexity (recurrences) | `1.jpeg`, `2.jpeg`, `Readme.md` | done |
-| [3](https://github.com/Wincentwilliam/_alg/tree/main/homework/03) | Enumeration + brute force (SAT) | `sat_solver.py`, `readme.md` | done |
+| [1](https://github.com/Wincentwilliam/_alg/tree/main/homework/01) | Lookup table / power2n | [`power2n.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/01/power2n.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/01/Readme.md) | done |
+| [2](https://github.com/Wincentwilliam/_alg/tree/main/homework/02) | Complexity (recurrences) | [`1.jpeg`](https://github.com/Wincentwilliam/_alg/blob/main/homework/02/1.jpeg), [`2.jpeg`](https://github.com/Wincentwilliam/_alg/blob/main/homework/02/2.jpeg), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/02/Readme.md) | done |
+| [3](https://github.com/Wincentwilliam/_alg/tree/main/homework/03) | Enumeration + brute force (SAT) | [`sat_solver.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/03/sat_solver.py), [`readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/03/readme.md) | done |
 | [4](https://github.com/Wincentwilliam/_alg/tree/main/homework/04) | Iteration | [`iterative_sqrt.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/04/iterative_sqrt.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/04/Readme.md) | done |
-| [5](https://github.com/Wincentwilliam/_alg/tree/main/homework/05) | Recursion, functional programming | `hanoi.py`, `sym_diff.py`, `functional_sort.py`, `Readme.md` | done |
-| [6](https://github.com/Wincentwilliam/_alg/tree/main/homework/06) | Lambda Calculus | `lambda_calc.py`, `Readme.md` | done |
-| [7](https://github.com/Wincentwilliam/_alg/tree/main/homework/07) | DP and text algorithms | `Lcs_diff.py`, `Readme.md` | done |
-| [8](https://github.com/Wincentwilliam/_alg/tree/main/homework/08) | Optimization (TSP) | `Tsp.py`, `tsp_tours.png`, `Readme.md` | done |
-| [9](https://github.com/Wincentwilliam/_alg/tree/main/homework/09) | Search algorithms | `maze_dfs.py`, `wolf_goat_cabbage_bfs.py`, `eight_queens_dfs_backtracking.py`, `npc_astar.py`, `circuit_routing.py`, `Readme.md` | done |
+| [5](https://github.com/Wincentwilliam/_alg/tree/main/homework/05) | Recursion, functional programming | [`hanoi.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/05/hanoi.py), [`sym_diff.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/05/sym_diff.py), [`functional_sort.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/05/functional_sort.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/05/Readme.md) | done |
+| [6](https://github.com/Wincentwilliam/_alg/tree/main/homework/06) | Lambda Calculus | [`lambda_calc.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/06/lambda_calc.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/06/Readme.md) | done |
+| [7](https://github.com/Wincentwilliam/_alg/tree/main/homework/07) | DP and text algorithms | [`Lcs_diff.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/07/Lcs_diff.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/07/Readme.md) | done |
+| [8](https://github.com/Wincentwilliam/_alg/tree/main/homework/08) | Optimization (TSP) | [`Tsp.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/08/Tsp.py), [`tsp_tours.png`](https://github.com/Wincentwilliam/_alg/blob/main/homework/08/tsp_tours.png), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/08/Readme.md) | done |
+| [9](https://github.com/Wincentwilliam/_alg/tree/main/homework/09) | Search algorithms | [`maze_dfs.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/maze_dfs.py), [`wolf_goat_cabbage_bfs.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/wolf_goat_cabbage_bfs.py), [`eight_queens_dfs_backtracking.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/eight_queens_dfs_backtracking.py), [`npc_astar.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/npc_astar.py), [`circuit_routing.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/circuit_routing.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/Readme.md) | done |
 
 ## 3. Check before Sunday 23:00
 
