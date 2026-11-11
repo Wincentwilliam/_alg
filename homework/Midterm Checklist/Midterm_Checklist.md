@@ -40,7 +40,7 @@ link inside the `()`, or leave it if the teacher already recorded it.
 | [1](https://github.com/Wincentwilliam/_alg/tree/main/homework/01) | Lookup table / power2n | `power2n.py`, `Readme.md` | done |
 | [2](https://github.com/Wincentwilliam/_alg/tree/main/homework/02) | Complexity (recurrences) | `1.jpeg`, `2.jpeg`, `Readme.md` | done |
 | [3](https://github.com/Wincentwilliam/_alg/tree/main/homework/03) | Enumeration + brute force (SAT) | `sat_solver.py`, `readme.md` | done |
-| [4](https://github.com/Wincentwilliam/_alg/tree/main/homework/04) | Iteration | `iterative_sqrt.py`, `Readme.md` | done |
+| [4](https://github.com/Wincentwilliam/_alg/tree/main/homework/04) | Iteration | [`iterative_sqrt.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/04/iterative_sqrt.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/04/Readme.md) | done |
 | [5](https://github.com/Wincentwilliam/_alg/tree/main/homework/05) | Recursion, functional programming | `hanoi.py`, `sym_diff.py`, `functional_sort.py`, `Readme.md` | done |
 | [6](https://github.com/Wincentwilliam/_alg/tree/main/homework/06) | Lambda Calculus | `lambda_calc.py`, `Readme.md` | done |
 | [7](https://github.com/Wincentwilliam/_alg/tree/main/homework/07) | DP and text algorithms | `Lcs_diff.py`, `Readme.md` | done |
