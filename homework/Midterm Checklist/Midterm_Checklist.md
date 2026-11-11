@@ -63,7 +63,7 @@ Copy this block if the teacher's repository needs the table as plain text.
 | 1 | 查表法 | 是 | | | [week1] |
 | 2 | 複雜度 | 是 | | | [week2] |
 | 3 | 列舉＋暴力 | 是 | | | [week3] |
-| 4 | 迭代法 | 否 | 是 | [證明]() | [week4] |
+| 4 | 迭代法 | 是 | | [week4] |
 | 5 | 遞迴，函數式編程 | 是 | | | [week5] |
 | 6 | Lambda Calculus | 是 | | | [week6] |
 | 7 | 動態規劃與文字算法 | 是 | | | [week7] |
