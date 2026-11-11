@@ -52,8 +52,6 @@ link inside the `()`, or leave it if the teacher already recorded it.
 - [x] All nine links (`homework/01` to `homework/09`) open correctly (checked on 2026/11/11, every page answers).
 - [x] The folder pattern is `homework/NN` for every week 01 to 09, so no link needs fixing.
 - [x] Week 2 has a `Readme.md` and two photos (`1.jpeg`, `2.jpeg`) in `homework/02`.
-- [ ] Week 4: add your leave-proof link in place of the empty `[證明]()`, if the teacher requires it.
-- [ ] Re-read the three attendance columns once and change anything that is not true.
 
 ## 4. Raw Markdown (copy-ready)
 
