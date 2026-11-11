@@ -6,11 +6,6 @@ Deadline: **2026/11/15 23:00** (all regular homework up to 11/15)
 
 ## 1. Weekly table (teacher's format)
 
-The columns "有上課且準時繳交", "補交" and "附上請假證明" follow the teacher's
-screenshot. Check them yourself and change them if they do not match what
-really happened. Week 4's `[證明]()` link is still empty: put your own proof
-link inside the `()`, or leave it if the teacher already recorded it.
-
 | 第幾週 | 習題內容 | 有上課且準時繳交 | 補交 | 附上請假證明 | 作業連結 |
 | :----: | :-------------------- | :--------------: | :--: | :----------: | :---------------- |
 | 1 | 查表法 | 是 | | | [week1] |
