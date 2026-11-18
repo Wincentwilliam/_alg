@@ -1946,3 +1946,1106 @@ continuous method, but it is the slowest and the least natural fit.
    document from the real output.
 
    ---
+
+# 第 9 週習題 ── 搜尋演算法 (Search Algorithms)
+
+> 用「搜尋法」解決 5 個經典問題：**DFS、BFS、A\*** 與 **IC 繞線 (多種方法)**。 全部使用 **純 Python 3**（只用標準函式庫），終端機彩色 / Emoji 輸出，可直接執行。
+
+Name: 洪偉升
+Department: 資訊工程學系
+Student ID: 111310523
+Class: Introduction to Algorithms
+
+---
+
+## 📑 目錄
+
+1. [作業內容與檔案對照](#1-作業內容與檔案對照)
+2. [環境與執行方式](#2-環境與執行方式)
+3. [搜尋演算法速覽（先看這個）](#3-搜尋演算法速覽)
+4. [第 1 題：老鼠走迷宮 — DFS](#4-第-1-題老鼠走迷宮--dfs)
+5. [第 2 題：狼羊甘藍菜過河 — BFS](#5-第-2-題狼羊甘藍菜過河--bfs)
+6. [第 3 題：八皇后 — DFS + 回溯](#6-第-3-題八皇后--dfs--回溯)
+7. [第 4 題：NPC 搜尋玩家 — A\*](#7-第-4-題npc-搜尋玩家--a)
+8. [第 5 題：IC 電路繞線 — 多種方法](#8-第-5-題ic-電路繞線--多種方法)
+9. [五題總結比較與心得](#9-五題總結比較與心得)
+10. [驗證方式與可擴充方向](#10-驗證方式與可擴充方向)
+11. [參考資料](#11-參考資料)
+
+---
+
+## 1. 作業內容與檔案對照
+
+| # | 題目 | 搜尋方法 | 程式檔 | 一句話重點 |
+|---|------|----------|--------|-----------|
+| 1 | 老鼠走迷宮 | **DFS** | `01_maze_dfs.py` | 堆疊 (stack) 一路走到底，死路再回溯；與 BFS 比較路徑長度 |
+| 2 | 狼羊甘藍菜過河 | **BFS** | `02_wolf_goat_cabbage_bfs.py` | 建狀態空間圖，分層展開，找出**所有**最短解 |
+| 3 | 八皇后 | **DFS (回溯法)** | `03_eight_queens_dfs.py` | 剪枝 + 對稱歸類：92 個解 → 12 個基本解 |
+| 4 | NPC 搜尋玩家 | **A\*** | `04_npc_astar.py` | 八方向 + 地形成本 + 每 tick 重新規劃，並與 Dijkstra / Greedy 比較 |
+| 5 | IC 電路繞線 | **Lee(BFS) / Dijkstra / A\* / Steiner / 排序搜尋 / rip-up** | `05_circuit_routing.py` | 兩層金屬、via、多接腳 net、繞線順序的影響 |
+
+```
+hw9_search/
+├── 01_maze_dfs.py
+├── 02_wolf_goat_cabbage_bfs.py
+├── 03_eight_queens_dfs.py
+├── 04_npc_astar.py
+├── 05_circuit_routing.py
+└── README.md        ← 你正在看的這份
+```
+
+---
+
+## 2. 環境與執行方式
+
+- **Python 3.8 以上**，**不需要安裝任何第三方套件**。
+- 建議使用支援 **UTF-8 / 256 色 / Emoji** 的終端機（Windows Terminal、VS Code 終端機、macOS Terminal、Linux 終端機皆可）。
+- Windows 舊版 `cmd` 若出現亂碼，先執行 `chcp 65001`；程式內已加上 `os.system("")` 讓 Windows 開啟 ANSI 顏色支援。
+- 想要純文字輸出（例如要貼進報告）：設定環境變數 `NO_COLOR=1`（程式會自動換成純文字符號）。
+
+```bash
+python 01_maze_dfs.py                   # 老鼠走迷宮
+python 01_maze_dfs.py --animate         # 動畫：看老鼠一格一格探索
+python 01_maze_dfs.py --seed 3 --width 41 --height 19   # 換一張迷宮
+
+python 02_wolf_goat_cabbage_bfs.py      # 狼羊甘藍菜
+
+python 03_eight_queens_dfs.py           # 八皇后
+python 03_eight_queens_dfs.py -n 10     # 十皇后
+
+python 04_npc_astar.py                  # NPC 追玩家 (快照)
+python 04_npc_astar.py --animate        # NPC 追玩家 (動畫)
+
+python 05_circuit_routing.py            # IC 繞線 (約 1 秒)
+```
+
+> 提示：所有迷宮 / 模擬都用**固定亂數種子**，所以每次執行結果都能重現，方便寫報告與驗證。
+
+---
+
+## 3. 搜尋演算法速覽
+
+先把本週用到的三個核心演算法放在同一張表，方便對照：
+
+| | **DFS** 深度優先 | **BFS** 廣度優先 | **A\*** |
+|---|---|---|---|
+| 資料結構 | 堆疊 Stack (LIFO) / 遞迴 | 佇列 Queue (FIFO) | 優先佇列 Priority Queue (min-heap) |
+| 展開順序 | 先往深處走，撞牆才回頭 | 一層一層往外擴 | 依 `f(n)=g(n)+h(n)` 最小者先展開 |
+| 保證找到解？ | 有限圖 ✔（無限深度圖可能走不出來） | ✔ | ✔ |
+| 保證最短 / 最佳？ | ✘ | ✔（每步成本相同時） | ✔（`h` 可採納 admissible 時） |
+| 時間 | O(V+E) | O(V+E) | O(E log V)（實務上遠少於 Dijkstra） |
+| 空間 | **O(深度)**（通常最省） | O(V)（最吃記憶體） | O(V) |
+| 適合 | 「存在性 / 列舉所有解」：迷宮、N 皇后、回溯 | 「最少步數」：過河、最短路 | 「有成本 + 有方向感」：遊戲尋路、繞線 |
+
+**三者其實是同一個骨架，只差「下一個要展開誰」：**
+
+```text
+frontier = [start]
+while frontier 不為空:
+    node = frontier.取出()        # DFS: 取最新的 (stack)
+                                  # BFS: 取最舊的 (queue)
+                                  # A* : 取 f 最小的 (priority queue)
+    if node 是目標: 回傳路徑
+    for 每個合法的鄰居 nb:
+        frontier.放入(nb)
+```
+
+---
+
+## 4. 第 1 題：老鼠走迷宮 — DFS
+
+📄 `01_maze_dfs.py`
+
+### 4.1 題目與建模
+
+| 項目 | 內容 |
+|---|---|
+| 問題 | 老鼠 🐭 從左上角出發，找到右下角的起司 🧀 |
+| 狀態 | 迷宮格座標 `(x, y)` |
+| 動作 | 往 上 / 右 / 下 / 左 移動到不是牆的鄰格 |
+| 目標 | `(寬-2, 高-2)` |
+
+### 4.2 方法：DFS（顯式堆疊）
+
+- 為什麼不用遞迴？大迷宮遞迴深度可能超過 Python 的限制 (`RecursionError`)，所以用**顯式堆疊**。
+- 流程：
+  ```text
+  stack = [(start, None)]
+  while stack:
+      cur, parent = stack.pop()
+      if cur 已走過: continue          # 避免走回頭路 / 無窮迴圈
+      標記走過、記錄 parent[cur] = parent
+      if cur == goal: break
+      把 cur 所有「沒走過的非牆鄰居」push 進 stack
+  由 goal 沿 parent 一路回溯 → 得到路徑
+  ```
+- 方向優先順序是「上→右→下→左」（實作時以 `reversed(DIRS)` 推入，使「上」最先被 pop）。
+- **回溯次數**：若這次 pop 出來的格子的 parent 不是「上一步走到的格子」，代表上一步走進死路，退回到更早的分岔點，計為一次回溯。
+
+### 4.3 迷宮如何產生？
+
+用「遞迴回溯法 (Recursive Backtracker)」— 它本身也是一個 DFS：從 `(1,1)` 開始隨機挑沒去過的鄰居、打通牆壁往前走，走不下去就退回。這樣得到**完美迷宮**（任兩點恰一條路）。
+再隨機多打通 `--loops` 面牆造出**環路**，這樣才會有「多條路徑」，才看得出 DFS 找到的路**不一定最短**。
+
+### 4.4 輸出範例（`seed=7`，31×15）
+
+```text
+🎉 DFS 找到起司了！ (•• = 最終路徑，░░ = 走過但不在路徑上)
+██████████████████████████████████████████████████████████████
+██🐭██    ••••••░░░░░░░░██••••••••••••••••••••••••••██░░░░░░██
+██••██████••██••██████████••██████████  ██████  ██••██░░██░░██
+██••••••██••██••••••••••••••            ██      ██••██░░██░░██
+██████••██••██████████████████████  ██  ██  ██████••██░░██░░██
+██  ██••██••██      ██              ██  ██    ••••••██░░██░░██
+██  ██••██••██  ██  ██  ██████████  ██  ██    ••██████████░░██
+██  ██••••••            ██          ██      ██••••••••••••••██
+██  ██████████████████████  ██████████████  ██████████████••██
+██          ██                              ██          ██••██
+██  ██████  ██  ██  ██  ██████  ██  ██████████  ██████████••██
+██          ██  ██  ██      ██      ██              ██••••••██
+██  ██  ██████  ██  ██  ██████  ██████  ██  ██  ██  ██••██████
+██  ██          ██                      ██            ••••🧀██
+
+  DFS 走訪格數      : 81
+  DFS 回溯次數      : 2
+  DFS 堆疊最大深度  : 9
+  DFS 路徑長度      : 64 步
+  BFS 走訪格數      : 216
+  BFS 最短路徑長度  : 54 步
+  → DFS 的路徑比最短路多繞了 10 步 (19%)
+```
+
+另外程式還會列出「前 10 個分岔點 / 死路」事件，讓你看到 stack 如何增減：
+
+```text
+  第 11格 (5, 7)   🔀 分岔路口  push 2 個新鄰居，堆疊現有  2 個待辦
+  第 23格 (11, 1)  💀 死路！  沒有新鄰居可 push → 下一步 pop 會退回舊分岔，堆疊現有  3 個待辦
+```
+
+### 4.5 觀察與結論
+
+- DFS **只走了 81 格**就找到起司，比 BFS 的 216 格少很多 → DFS 運氣好時很省。
+- 但 DFS 的路徑 **64 步 > 最短 54 步**：DFS 只保證「找得到」，**不保證最短**。
+- 需要最短路請改用 BFS（程式已實作 `bfs()` 作為對照）。
+- DFS 的空間用量只有「目前路徑上的分岔數」(最大堆疊深度 9)，而 BFS 要存整圈波前。
+
+---
+
+## 5. 第 2 題：狼羊甘藍菜過河 — BFS
+
+📄 `02_wolf_goat_cabbage_bfs.py`
+
+### 5.1 題目
+
+農夫要把狼🐺、羊🐐、甘藍菜🥬 從左岸運到右岸。船一次只能載「農夫 + 最多一樣東西」。農夫不在場時：**狼會吃羊、羊會吃甘藍菜**。問最少要渡河幾次？
+
+### 5.2 建模 — 把「謎題」變成「圖」
+
+- **狀態** = `(農夫, 狼, 羊, 菜)`，每個值 `0`=左岸、`1`=右岸 → 2⁴ = **16** 種。
+- **合法狀態**：沒有「狼和羊單獨同岸」、也沒有「羊和菜單獨同岸」→ 剩 **10** 種。
+- **動作**：農夫獨自過河，或帶一樣**與他同岸**的東西過河；渡河後新狀態必須合法。
+- **起點** `LLLL`，**終點** `RRRR`（L=左岸、R=右岸，順序為 農夫/狼/羊/菜）。
+
+```mermaid
+graph LR
+  LLLL --- RLRL
+  RLRL --- LLRL
+  LLRL --- RRRL
+  LLRL --- RLRR
+  RRRL --- LRLL
+  RLRR --- LLLR
+  LRLL --- RRLR
+  LLLR --- RRLR
+  RRLR --- LRLR
+  LRLR --- RRRR
+```
+
+### 5.3 為什麼用 BFS？
+
+每次渡河成本都是 1，BFS 一層一層展開 → **第一次碰到終點的那一層，就是最少渡河次數**。
+本程式更進一步：每個節點記錄**所有**能以最短距離到達它的前驅 (`parents[v]` 是 list)，因此可以從終點回溯出「**全部**最短解」，而不只是一個。
+
+### 5.4 輸出範例
+
+BFS 分層：
+
+```text
+  第 0 層 (1 個狀態)：LLLL
+  第 1 層 (1 個狀態)：RLRL
+  第 2 層 (1 個狀態)：LLRL
+  第 3 層 (2 個狀態)：RRRL  RLRR      ← 這裡開始分岔 → 兩種解
+  第 4 層 (2 個狀態)：LRLL  LLLR
+  第 5 層 (1 個狀態)：RRLR
+  第 6 層 (1 個狀態)：LRLR
+  第 7 層 (1 個狀態)：RRRR
+```
+
+解法 #1 的視覺化（每步附場景圖）：
+
+```text
+  第 1 次：農夫帶著 🐐羊 過河 (左岸 → 右岸)
+        🏝 [   🐺    🥬] 🌊  ≈≈≈≈≈≈≈≈≈≈🛶🌊 [👨    🐐   ] 🏝    RLRL
+  第 2 次：農夫獨自過河 (右岸 → 左岸)
+  第 3 次：農夫帶著 🐺狼 過河 (左岸 → 右岸)
+  第 4 次：農夫帶著 🐐羊 過河 (右岸 → 左岸)      ← 關鍵：把羊「帶回來」
+  第 5 次：農夫帶著 🥬甘藍菜 過河 (左岸 → 右岸)
+  第 6 次：農夫獨自過河 (右岸 → 左岸)
+  第 7 次：農夫帶著 🐐羊 過河 (左岸 → 右岸)
+```
+
+### 5.5 結論
+
+- **最少 7 次渡河**，共 **2 種最短解**（差別只在「狼」與「菜」誰先過河，兩者互不傷害）。
+- 關鍵技巧是**把羊帶回來** — 這在 BFS 的狀態圖上就是一條「回頭邊」，人類容易忽略，但搜尋會自動找到。
+- BFS 只展開 10 個節點（整個合法狀態空間），而且 `visited`（用 `dist` 字典）避免了在狀態圖上繞圈。
+
+---
+
+## 6. 第 3 題：八皇后 — DFS + 回溯
+
+📄 `03_eight_queens_dfs.py`
+
+### 6.1 題目
+
+在 8×8 棋盤放 8 個皇后，使任兩個皇后不在同一列、同一行、同一斜線。
+
+### 6.2 建模（關鍵：降低搜尋空間）
+
+| 方法 | 搜尋空間 |
+|---|---|
+| 暴力：64 格選 8 格 | C(64, 8) = **4,426,165,368** |
+| 每列恰好一個皇后 | 8⁸ = **16,777,216** |
+| **每列一個 + 邊放邊剪枝 (本程式)** | 只展開 **2,056** 個節點 |
+
+- **搜尋樹**：第 `r` 層 = 決定「第 `r` 列」的皇后放哪一行 → 「同列衝突」在建模時就消失。
+- **衝突檢查 O(1)**：三個集合
+  - `cols`：已被占用的**行**
+  - `d1`：主對角線 `r - c`
+  - `d2`：副對角線 `r + c`
+- **DFS + 回溯**：
+
+```python
+def dfs(r):
+    if r == n: 記錄解; return
+    for c in range(n):
+        if c in cols or (r-c) in d1 or (r+c) in d2: continue   # 剪枝
+        放置 (r, c)          # 做選擇
+        dfs(r + 1)           # 往下一層
+        撤銷 (r, c)          # 回溯：復原狀態
+```
+
+### 6.3 對稱歸類（12 個基本解）
+
+一個解經過 **4 種旋轉 × 2 種鏡射 = 8 種對稱變換**後，會得到最多 8 個「看起來不同、本質相同」的解。
+程式對每個解算出所有變換，取字典序最小的當代表 → 92 個解歸為 **12 類**：
+
+- 11 類各有 8 個等價解 → 88
+- 1 類只有 4 個等價解（它自己旋轉 180° 會得到自己）→ 4
+- 驗算：`8×11 + 4×1 = 92` ✔
+
+### 6.4 輸出範例
+
+搜尋軌跡（縮排 = 深度）：
+
+```text
+  放置 ♛ 第 1 列 第 a 行
+    放置 ♛ 第 2 列 第 c 行
+      放置 ♛ 第 3 列 第 e 行
+        放置 ♛ 第 4 列 第 b 行
+          放置 ♛ 第 5 列 第 d 行
+            死胡同 ☠ 第 6 列        ← 第 6 列所有位置都被攻擊 → 回溯
+          撤銷 ✖ 第 5 列 第 d 行
+```
+
+第一個解（`solution = [0, 4, 7, 5, 2, 6, 1, 3]`）：
+
+```text
+ 1 ♛ · · · · · · ·
+ 2 · · · · ♛ · · ·
+ 3 · · · · · · · ♛
+ 4 · · · · · ♛ · ·
+ 5 · · ♛ · · · · ·
+ 6 · · · · · · ♛ ·
+ 7 · ♛ · · · · · ·
+ 8 · · · ♛ · · · ·
+   a b c d e f g h
+```
+
+規模統計：
+
+```text
+    N │      解數 │    基本解 │      DFS節點 │              N^N
+    4 │       2 │      1 │         16 │              256
+    6 │       4 │      1 │        152 │           46,656
+    8 │      92 │     12 │      2,056 │       16,777,216   ◀
+   10 │     724 │     92 │     35,538 │   10,000,000,000
+```
+
+### 6.5 結論
+
+- 找到**第一個解**只需成功放置 113 次；**列舉全部 92 個解**也只展開 2,056 個節點。
+- 「**剪枝**」是回溯法的靈魂：一旦發現這條路必死，就整棵子樹放棄。
+- 最壞情況時間仍是指數級（約 O(N!)），所以 N 越大成長越快（N=10 已 35 萬節點量級→3.5 萬；N 更大需更聰明的方法如位元運算、對稱剪枝、最小衝突法）。
+
+---
+
+## 7. 第 4 題：NPC 搜尋玩家 — A\*
+
+📄 `04_npc_astar.py`
+
+### 7.1 題目與設定
+
+地圖上有牆、草地、森林、沼澤。👹 NPC 要追捕會逃跑的 🧑 玩家。
+
+| 地形 | 符號 | 移動成本 |
+|---|---|---|
+| 草地 | 空白 | 1 |
+| 森林 | `♣♣` | 2 |
+| 沼澤 | `≈≈` | 5 |
+| 牆 | `▓▓` | 不可通行 |
+
+- **八方向移動**，斜走成本 ×√2。
+- **不穿牆角 (no corner-cutting)**：斜走時，兩旁相鄰的兩格都不能是牆。
+- 步驟成本 = `(1 或 √2) × 目的格地形成本`。
+
+### 7.2 A\* 原理
+
+```text
+f(n) = g(n) + h(n)
+g(n) : 起點到 n 的「實際」最小花費
+h(n) : n 到終點的「估計」花費  →  Octile 距離：  (dx + dy) + (√2 − 2)·min(dx, dy)
+```
+
+- **可採納 (admissible)**：`h` 絕不高估真實花費（地形最低成本是 1，所以用成本 1 算的 Octile 距離不會高估）→ **保證最佳解**。
+- 實作：`heapq` 優先佇列 + `g_score` 字典 + `closed` 集合；用「遞增計數器」當 tie-breaker 避免比較 tuple 時比到座標。
+- 同一份程式用 `mode` 切換三種演算法做比較：
+
+| mode | 排序依據 | 特性 |
+|---|---|---|
+| `astar` | `g + h` | 最佳 + 有方向感 |
+| `dijkstra` | `g` | 最佳，但像水波一樣四面擴散 |
+| `greedy` | `h` | 很快，但**不保證最佳**，會被沼澤 / 牆誘導繞遠路 |
+
+### 7.3 追逐模擬
+
+- NPC 每個 tick 走 1 步，玩家每 2 個 tick 走 1 步（NPC 速度是 2 倍）。
+- **玩家逃跑 AI**：在幾個「安全點」中，挑 `NPC 到該點花費 − 1.5 × 玩家到該點花費` 最大者 (也是用 A\* 算的)，每 6 步重新選。
+- **NPC 每個 tick 都重新規劃** A\*（因為玩家位置變了）。
+- 當兩者的切比雪夫距離 ≤ 1 時視為抓到。
+
+### 7.4 輸出範例
+
+同一個查詢（NPC → 玩家初始位置）三種演算法比較：
+
+```text
+  演算法              路徑花費       最佳?      展開節點      路徑格數
+  A*               36.73      ✔ 最佳       185        34
+  Dijkstra         36.73      ✔ 最佳       396        34
+  Greedy BFS       59.11   ✘ +22.4        51        38
+```
+
+追逐結果：
+
+```text
+  💥 NPC 在第 33 個 tick 抓到玩家！
+  重新規劃次數      : 34
+  A* 累計展開節點   : 1,511  (平均每次 44)
+  若用 Dijkstra     : 7,832  (平均每次 230)
+  A* 節省           : 81% 的搜尋量
+```
+
+（彩色終端機中，被展開的格子會泛黃、最終路徑以黃色 `••` 標示；加 `--animate` 可看 NPC 追逐動畫。）
+
+### 7.5 結論
+
+- **A\* 與 Dijkstra 找到一樣便宜的路徑**（36.73），但 A\* 少展開 **53%**；在整場追逐中累計節省 **81%**。
+- **Greedy** 只看 `h` 所以展開最少（51），但路徑貴了 22.4 → 「快但不準」。
+- 距離越近，A\* 展開越少（追逐最後幾個 tick 只展開 2~4 格）→ 適合**每個 tick 都要重新規劃**的遊戲 AI。
+- 地形成本讓 NPC 自動**繞開沼澤**（寧可多走幾格草地），這是單純 BFS 做不到的。
+
+---
+
+## 8. 第 5 題：IC 電路繞線 — 多種方法
+
+📄 `05_circuit_routing.py`
+
+### 8.1 問題
+
+晶片上有被巨集方塊 (macro) 占據的區域與數條**網路 (net)**，每條 net 要把 2 個以上的**接腳 (pin)** 用金屬導線連起來：
+
+- 導線不能穿過障礙物；
+- **不同 net 的導線不可重疊**（否則短路）；
+- 多層金屬之間用**通孔 (via)** 換層；
+- 目標：全部連通，**總線長短、via 少**。
+
+IC 實務上分兩階段：**全域繞線 (global routing)** 先粗略分配走哪些區域，**細部繞線 (detailed routing)** 再在格點上真正畫線。本題實作細部繞線的核心搜尋。
+
+### 8.2 本程式模型
+
+- 格點圖 34×15、**兩層金屬**：`M1`（偏好水平）、`M2`（偏好垂直）。
+- 狀態 = `(層, x, y)`；動作 = 上下左右一步，或在同一座標用 via 換層。
+- **成本模型**（模擬真實製程偏好）：順向一步 **1**、逆向一步 **3**、via **6**。
+- 障礙：`▒▒` 巨集只擋 M1（M2 可跨越）；`▓▓` 兩面交錯的牆兩層都擋 → 通道被擠成 **S 形**，製造「繞線擁擠」。
+- 共 5 條 net：A、B、D、E 為 2 接腳，**C 為 3 接腳**。
+
+### 8.3 實作了哪些方法？
+
+| 方法 | 在程式中 | 保證 | 說明 |
+|---|---|---|---|
+| ① **Lee 演算法 (Maze Router)** | `lee_demo()` (Ⓐ) | 單層最短 | 本質就是 **BFS**：從 S 一圈圈往外填距離（擴張），碰到 T 後沿「距離遞減 1」走回 S（回溯），再把路徑標記成佔用（清除）。1961 年提出，至今仍是繞線演算法的基石。缺點：沒有方向感，填滿整片區域，時間與記憶體 O(W·H) |
+| ② **Dijkstra (含成本模型)** | `route_to(..., "dijkstra")` | 最小成本 | 有「方向偏好 / via 懲罰」時 BFS 不夠，要用 Dijkstra（BFS 的加權版） |
+| ③ **A\*** | `route_to(..., "astar")` | 最小成本 | 在②加上曼哈頓距離 `h`（每步最低成本 1 → 可採納），展開節點明顯更少 |
+| ④ **多接腳 net：Steiner-tree 式 / Prim 式擴張** | `route_all()` | 近似 | 3 接腳以上的 net：以「**已繞好的整棵樹**」為**多重起點**，每次連到距離最近的下一個 pin |
+| ⑤ **繞線順序搜尋** | Ⓒ 窮舉 5! = 120 種 | 此規模下可得最佳順序 | 先繞的 net 會擋住後面的 → 順序會影響成敗與成本 |
+| ⑥ **簡化版 Rip-up & Reroute** | Ⓒ 下半 | 啟發式 | 發現某條 net 被堵死 → 拆掉重來，把失敗的 net 提到最前面再繞 |
+
+### 8.4 其他方法（說明，未全部實作）
+
+| 方法 | 重點 |
+|---|---|
+| **Hadlock (1977)** | Lee 的改良：以「繞道次數 (detour number)」取代距離當波前優先權，波前更窄、更快，路徑仍最短 |
+| **Line-Probe：Mikami-Tabuchi (1968)、Hightower (1969)** | 不逐格擴張，而是從 S、T 兩端沿**直線**探測、遇障礙才轉彎。記憶體小、速度快，但不保證最短 |
+| **Channel Routing / Left-Edge Algorithm** | 規則通道 (兩排 pin 中間的空間) 內做「軌道 (track) 指派」，類似區間著色 (interval graph coloring) |
+| **Rip-up & Reroute / PathFinder (McMurchie & Ebeling, 1995)** | 允許暫時重疊，並隨疊代提高壅塞區的成本，讓各 net「協商」出無衝突的解；FPGA 與先進 IC 工具都用這類 |
+| **Steiner Tree (Rectilinear Steiner Minimal Tree)** | 多接腳 net 的最小總線長（NP-hard），實務用 FLUTE 等查表 / 啟發式 |
+| **整數線性規劃 (ILP) / 多商品流 (multi-commodity flow)** | 全域繞線的精確建模，規模大時求解成本高 |
+| **Global + Detailed Routing** | 先把晶片切成 tile 做全域規劃，再在每個區域做細部繞線，降低搜尋空間 |
+
+### 8.5 輸出範例
+
+**Ⓐ Lee 波前**（數字 = 距 S 的最短步數；最後黃底路徑長度 37）：
+
+```text
+▓▓▓  2  1  2  3  4  5  6▓▓▓ 20 21 22 23 24 25 26 27 28 29 30 31 32 33▓▓▓
+▓▓▓  1 S   1  2  3  4  5▓▓▓ 19 20 21 22 23 24 25 26 27 28 29 30 31 32▓▓▓
+  ...
+▓▓▓  7  6  7  8  9 10 11 12 13 14 15 16 17 18▓▓▓ 32 33 34 35 36 T  · ▓▓▓
+```
+
+**Ⓒ 繞線順序的影響**：
+
+```text
+  窮舉 120 種順序 (5!) → 100 種全部繞通、20 種有 net 被堵死。
+  被堵死的 net 次數： C×20
+
+  順序                 總成本     線長   via   說明
+  A→B→C→D→E          270    164    13   預設順序：✔ 全部繞通
+  B→D→C→A→E          258    162    11   最佳順序：✔ 全部繞通
+  A→D→C→E→B          309    175    12   最差(但能繞通)：✔ 全部繞通
+
+  → 能繞通的順序之間，總成本最多差 51 (20%)。
+
+  【簡化版 rip-up & reroute】從一個會失敗的順序出發：
+   第1輪  順序 B→D→A→C→E  ✘ C 被堵死 → 拆掉全部導線，把 C 提到最前面再繞
+   第2輪  順序 C→B→D→A→E  ✔ 全部繞通  (成本 268，via 13)
+```
+
+**Ⓓ A\* vs Dijkstra**（順序 B→D→C→A→E）：
+
+```text
+  net     接腳     A* 成本     A* 展開    Dij 成本    Dij 展開      節省
+  B        2        22       104        22       314     67%
+  D        2        44       246        44       656     62%
+  C        3        67       612        67      1162     47%
+  A        2        93       610        93       637      4%
+  E        2        32       153        32       317     52%
+  合計               258      1725       258      3086     44%
+```
+
+**Ⓔ 最佳繞線結果**（M1 層；`◉` = via，字母 = pin，線條用盒狀字元畫出轉角與分岔）：
+
+```text
+· · · · · · · · · · · · · · · · ▓▓▓▓◉───────────────────────────◉ ·
+· · · · · · · · · · · · · E · · ▓▓▓▓· · · · · · ▓▓▓▓▓▓▓▓▓▓▓▓· · · ·
+· · · · ▒▒▒▒▒▒▒▒▒▒▒▒▒▒· · · · · ▓▓▓▓· · · C · · ▓▓▓▓▓▓▓▓▓▓▓▓· · · ·
+· · A─┐ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒· · · · · ▓▓▓▓· · · · · · ▓▓▓▓▓▓▓▓▓▓▓▓· · · ·
+· · · │ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒B─◉ · · · ▓▓▓▓· · · · · · ▓▓▓▓▓▓▓▓▓▓▓▓· · · ·
+· · · │ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒· ┌─────◉ ▓▓▓▓· · · ┌───────────────────────┐
+· · · └─────────────────┘ ┌───────────────┘ ▓▓▓▓◉───────────────C │
+· D───────────────────────┘ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒· ▓▓▓▓· · · · · · · · · D
+  ...
+```
+
+### 8.6 結論
+
+- **Lee = BFS**：最短但「盲目」；**A\*** 加上方向感，在相同成本模型下找到**同樣便宜**的路徑，整體少展開約 **44%**（個別 net 最多 87% 的差異取決於地形）。
+- 多接腳 net 不是「兩兩連線」，而是把**已連通的整棵樹**當起點去連下一個 pin → 這正是 Steiner tree 近似的做法。
+- **繞線有「先來後到」問題**：120 種順序中 20 種直接失敗、成功的順序成本也差到 20%。這說明為什麼實務上需要 rip-up & reroute / 壅塞協商，而不是一次繞完就結束。
+- 程式另外用並查集 (union-find) 驗證過：**全部 120 種順序的所有成功 net（共 580 條）都連通 pin、沒有穿過障礙物、沒有 net 重疊**。
+
+---
+
+## 9. 五題總結比較與心得
+
+| 題 | 演算法 | 為什麼選它 | 關鍵資料結構 | 最大收穫 |
+|---|---|---|---|---|
+| 1 迷宮 | DFS | 只要「找到出口」，空間省 | stack | DFS 快但**不保證最短** |
+| 2 過河 | BFS | 要「最少步數」 | queue + dist/parents | 把謎題**建模成狀態圖**；BFS 能列出**所有**最短解 |
+| 3 八皇后 | DFS + 回溯 | 要「列舉所有解」 | 遞迴 + 集合 (O(1) 衝突檢查) | **剪枝**把 1600 萬降到 2056；對稱性歸類 |
+| 4 NPC | A\* | 有成本、有目標、要即時 | heap + g_score | **好的啟發函式**省 50~80% 搜尋；Greedy 快但不準 |
+| 5 繞線 | BFS(Lee) → Dijkstra → A\* + 順序搜尋 | 多層、有成本、多條線互相影響 | heap + occupancy map | **單條最佳 ≠ 整體最佳**，要看順序與壅塞 |
+
+**選演算法的心法：**
+
+1. **要不要最短 / 最佳？** 不要 → DFS；要 → BFS（成本相同）或 Dijkstra / A\*（成本不同）。
+2. **有沒有好的 `h` 估計？** 有 → A\*；沒有 → Dijkstra。
+3. **要不要列舉全部解？** → DFS + 回溯 + 剪枝。
+4. **記憶體是不是瓶頸？** → DFS 最省；BFS / A\* 要存整個邊界。
+5. **問題會不會「動態變化」？** → 每次變化重新規劃（第 4 題）；A\* 夠快才行。
+
+---
+
+## 10. 驗證方式與可擴充方向
+
+**已做的驗證**
+
+- 第 1 題：以固定 seed 重現；DFS 與 BFS 路徑長度對照，確認 BFS 為最短、DFS 路徑合法。
+- 第 2 題：狀態圖 10 個合法狀態全可達；最短距離 7，與已知經典解相符；回溯出 2 種最短解。
+- 第 3 題：解數 92、基本解 12 與 N=4~10 的已知數列 (2, 10, 4, 40, 92, 352, 724) 完全吻合。
+- 第 4 題：A\* 與 Dijkstra 成本相同（最佳性）；追逐過程中玩家與 NPC 不會走進牆。
+- 第 5 題：對 120 種順序 × 全部成功 net 做連通性、重疊、障礙檢查，違規 0 件。
+
+**可以再擴充**
+
+- 第 1 題：加入 IDA\* / 雙向 BFS；改成「大迷宮 + 多出口」。
+- 第 3 題：用位元運算加速；用「最小衝突法 (min-conflicts)」解 N=1000 皇后。
+- 第 4 題：加入 JPS (Jump Point Search)、動態障礙物、D\* Lite（地圖變動時只更新必要部分）。
+- 第 5 題：加入 Hadlock、PathFinder 壅塞協商、三層以上金屬、時序 / 串擾成本。
+
+---
+
+## 11. 參考資料
+
+- Russell, S. & Norvig, P. *Artificial Intelligence: A Modern Approach* — 第 3 章（搜尋）、第 6 章（限制滿足 / 回溯，N 皇后）。
+- Hart, P. E., Nilsson, N. J., Raphael, B. (1968). *A Formal Basis for the Heuristic Determination of Minimum Cost Paths* — A\* 原始論文。
+- Dijkstra, E. W. (1959). *A Note on Two Problems in Connexion with Graphs*.
+- Lee, C. Y. (1961). *An Algorithm for Path Connections and Its Applications*, IRE Trans. Electronic Computers — Lee 演算法。
+- Hadlock, F. O. (1977). *A Shortest Path Algorithm for Grid Graphs*, Networks.
+- Mikami, K. & Tabuchi, K. (1968). *A Computer Program for Optimal Routing of Printed Circuit Connectors*; Hightower, D. W. (1969). *A Solution to Line-Routing Problems on the Continuous Plane*.
+- McMurchie, L. & Ebeling, C. (1995). *PathFinder: A Negotiation-Based Performance-Driven Router for FPGAs*.
+- Sherwani, N. *Algorithms for VLSI Physical Design Automation* — 繞線 (routing) 章節。
+
+   ---
+
+# Midterm: weekly check table
+
+Name: 洪偉升  |  Student ID: 111310523  |  Class: Introduction to Algorithms
+
+Deadline: **2026/11/15 23:00** (all regular homework up to 11/15)
+
+## 1. Weekly table (teacher's format)
+
+| 第幾週 | 習題內容 | 有上課且準時繳交 | 補交 | 附上請假證明 | 作業連結 |
+| :----: | :-------------------- | :--------------: | :--: | :----------: | :---------------- |
+| 1 | 查表法 | 是 | | | [week1] |
+| 2 | 複雜度 | 是 | | | [week2] |
+| 3 | 列舉＋暴力 | 是 | | | [week3] |
+| 4 | 迭代法 | 是 | | | [week4] |
+| 5 | 遞迴，函數式編程 | 是 | | | [week5] |
+| 6 | Lambda Calculus | 是 | | | [week6] |
+| 7 | 動態規劃與文字算法 | 是 | | | [week7] |
+| 8 | 優化算法 | 是 | | | [week8] |
+| 9 | 搜尋算法 | 是 | | | [week9] |
+
+[week1]: https://github.com/Wincentwilliam/_alg/tree/main/homework/01
+[week2]: https://github.com/Wincentwilliam/_alg/tree/main/homework/02
+[week3]: https://github.com/Wincentwilliam/_alg/tree/main/homework/03
+[week4]: https://github.com/Wincentwilliam/_alg/tree/main/homework/04
+[week5]: https://github.com/Wincentwilliam/_alg/tree/main/homework/05
+[week6]: https://github.com/Wincentwilliam/_alg/tree/main/homework/06
+[week7]: https://github.com/Wincentwilliam/_alg/tree/main/homework/07
+[week8]: https://github.com/Wincentwilliam/_alg/tree/main/homework/08
+[week9]: https://github.com/Wincentwilliam/_alg/tree/main/homework/09
+
+## 2. Homework status (every file is a working link)
+
+| Week | Topic | Files in the folder (click to open) | Status |
+|---|---|---|---|
+| [1](https://github.com/Wincentwilliam/_alg/tree/main/homework/01) | Lookup table / power2n | [`power2n.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/01/power2n.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/01/Readme.md) | done |
+| [2](https://github.com/Wincentwilliam/_alg/tree/main/homework/02) | Complexity (recurrences) | [`1.jpeg`](https://github.com/Wincentwilliam/_alg/blob/main/homework/02/1.jpeg), [`2.jpeg`](https://github.com/Wincentwilliam/_alg/blob/main/homework/02/2.jpeg), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/02/Readme.md) | done |
+| [3](https://github.com/Wincentwilliam/_alg/tree/main/homework/03) | Enumeration + brute force (SAT) | [`sat_solver.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/03/sat_solver.py), [`readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/03/readme.md) | done |
+| [4](https://github.com/Wincentwilliam/_alg/tree/main/homework/04) | Iteration | [`iterative_sqrt.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/04/iterative_sqrt.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/04/Readme.md) | done |
+| [5](https://github.com/Wincentwilliam/_alg/tree/main/homework/05) | Recursion, functional programming | [`hanoi.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/05/hanoi.py), [`sym_diff.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/05/sym_diff.py), [`functional_sort.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/05/functional_sort.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/05/Readme.md) | done |
+| [6](https://github.com/Wincentwilliam/_alg/tree/main/homework/06) | Lambda Calculus | [`lambda_calc.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/06/lambda_calc.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/06/Readme.md) | done |
+| [7](https://github.com/Wincentwilliam/_alg/tree/main/homework/07) | DP and text algorithms | [`Lcs_diff.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/07/Lcs_diff.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/07/Readme.md) | done |
+| [8](https://github.com/Wincentwilliam/_alg/tree/main/homework/08) | Optimization (TSP) | [`Tsp.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/08/Tsp.py), [`tsp_tours.png`](https://github.com/Wincentwilliam/_alg/blob/main/homework/08/tsp_tours.png), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/08/Readme.md) | done |
+| [9](https://github.com/Wincentwilliam/_alg/tree/main/homework/09) | Search algorithms | [`maze_dfs.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/maze_dfs.py), [`wolf_goat_cabbage_bfs.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/wolf_goat_cabbage_bfs.py), [`eight_queens_dfs_backtracking.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/eight_queens_dfs_backtracking.py), [`npc_astar.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/npc_astar.py), [`circuit_routing.py`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/circuit_routing.py), [`Readme.md`](https://github.com/Wincentwilliam/_alg/blob/main/homework/09/Readme.md) | done |
+
+## 3. Check before Sunday 23:00
+
+- [x] All nine links (`homework/01` to `homework/09`) open correctly (checked on 2026/11/11, every page answers).
+- [x] The folder pattern is `homework/NN` for every week 01 to 09, so no link needs fixing.
+- [x] Week 2 has a `Readme.md` and two photos (`1.jpeg`, `2.jpeg`) in `homework/02`.
+
+## 4. Raw Markdown (copy-ready)
+
+Copy this block if the teacher's repository needs the table as plain text.
+
+```
+| 第幾週 | 習題內容 | 有上課且準時繳交 | 補交 | 附上請假證明 | 作業連結 |
+| :----: | :-------------------- | :--------------: | :--: | :----------: | :---------------- |
+| 1 | 查表法 | 是 | | | [week1] |
+| 2 | 複雜度 | 是 | | | [week2] |
+| 3 | 列舉＋暴力 | 是 | | | [week3] |
+| 4 | 迭代法 | 是 | | [week4] |
+| 5 | 遞迴，函數式編程 | 是 | | | [week5] |
+| 6 | Lambda Calculus | 是 | | | [week6] |
+| 7 | 動態規劃與文字算法 | 是 | | | [week7] |
+| 8 | 優化算法 | 是 | | | [week8] |
+| 9 | 搜尋算法 | 是 | | | [week9] |
+
+[week1]: https://github.com/Wincentwilliam/_alg/tree/main/homework/01
+[week2]: https://github.com/Wincentwilliam/_alg/tree/main/homework/02
+[week3]: https://github.com/Wincentwilliam/_alg/tree/main/homework/03
+[week4]: https://github.com/Wincentwilliam/_alg/tree/main/homework/04
+[week5]: https://github.com/Wincentwilliam/_alg/tree/main/homework/05
+[week6]: https://github.com/Wincentwilliam/_alg/tree/main/homework/06
+[week7]: https://github.com/Wincentwilliam/_alg/tree/main/homework/07
+[week8]: https://github.com/Wincentwilliam/_alg/tree/main/homework/08
+[week9]: https://github.com/Wincentwilliam/_alg/tree/main/homework/09
+```
+
+---
+
+# Homework 10: Derivatives and Integrals with Numbers
+
+> This README is the write-up and process document for the assignment. The program and this document were produced with the help of Claude AI, then run, checked against exact answers, and corrected where the first version was wrong.
+
+Name: 洪偉升
+Department: 資訊工程學系
+Student ID: 111310523
+Class: Introduction to Algorithms
+
+---
+
+## 1. The assignment
+
+Write programs that compute derivatives and integrals **numerically** (with
+arithmetic on numbers, not with algebra):
+
+1. numerical derivative and integral of a **one-variable** function
+2. **Monte Carlo** integral of a one-variable function
+3. numerical **gradient** (n-variable derivative) and **hypervolume** (n-variable integral)
+4. **Monte Carlo** integral of an n-variable function
+5. a function `integral(f, low, high)` that uses a **Riemann sum** for n variables
+   (n = length of `low` and `high`), tried in **1, 2, 5 and 100 dimensions**
+   with `f(x) = x1^2 + ... + xn^2`, then done again with Monte Carlo
+
+Files:
+
+| File | Purpose |
+|---|---|
+| `numeric_calculus.py` | all five parts, one file, nothing to install |
+| `output.txt` | the full output of `python numeric_calculus.py` |
+
+Run it with `python numeric_calculus.py` (a few seconds to under half a minute,
+depending on the computer). All random numbers come from a seeded generator, so
+every number in the output is the same on every run; only the `seconds` columns
+change.
+
+### Setup for part 5
+
+As given in the assignment, `low = 0` and `high = 1` in every dimension, so the
+box is the unit hypercube `[0, 1]^n`. The exact answer is known: each term
+`xi^2` integrates to 1/3, so the integral is **n/3**. That makes it possible to
+check every result.
+
+## 2. The ideas in plain words
+
+- **Derivative = slope.** Estimate it from two points close to each other.
+- **Integral = area (volume, hypervolume).** Cut the region into many small
+  pieces, estimate the height of f on each, add up height x size.
+- **Riemann sum / grid:** the pieces form a regular grid.
+- **Monte Carlo:** instead of a regular grid, throw random points into the
+  region, average f over them and multiply by the size of the region.
+- **Hypervolume** is the n-dimensional version of area: the integral of f over a
+  box in n dimensions. With f = 1 inside a shape and 0 outside, it is the volume
+  of that shape.
+
+## 3. Part 1: one variable (`derivative`, `integral_1d`)
+
+### Derivative
+The **central difference** uses both sides of x:
+
+```
+f'(x) ~ ( f(x+h) - f(x-h) ) / (2h)
+```
+
+Two kinds of error compete. The *formula* error shrinks as `h` gets smaller
+(like `h^2` for the central difference, like `h` for the one-sided "forward"
+difference). The *rounding* error of the computer grows as `h` gets smaller,
+because two almost equal numbers are subtracted and the result is divided by a
+tiny number (it grows like `eps/h`, where eps = 2.2e-16 is the precision of a
+double). The best `h` is where they meet, around `eps^(1/3)` ~ 6e-6. The table
+in the output shows it for sin at x = 1: the central error reaches 1.1e-11 at
+h = 1e-5, and gets worse for smaller h. The default `h = 1e-5` was chosen from this.
+
+### Integral
+`integral_1d(f, a, b, n, rule)` cuts [a, b] into n slices. Four rules:
+
+| Rule | Each slice is replaced by | Error shrinks like |
+|---|---|---|
+| `left` | a rectangle as tall as f at the left edge (a Riemann sum) | 1/n |
+| `mid` | a rectangle as tall as f in the middle (a Riemann sum) | 1/n^2 |
+| `trapezoid` | a slanted top through both edges | 1/n^2 |
+| `simpson` | a parabola through both edges and the middle | 1/n^4 |
+
+The output measures this on the integral of e^x from 0 to 1 (exact e - 1):
+making the slices 10 times more numerous divides the error by 10 (left), 100
+(mid, trapezoid) and about 10,000 (Simpson). With 1000 slices Simpson reaches an
+error near 1e-14.
+
+*Why not sin on [0, pi]?* My first test used it, and the left rule seemed to be
+order 2. That is a coincidence: sin is 0 at both ends, which makes the left sum
+identical to the trapezoid sum. e^x has different ends, so each rule shows its
+true order.
+
+## 4. Part 2: one variable, Monte Carlo (`mc_integral_1d`)
+
+```
+integral ~ (b - a) * average of f at N random points of [a, b]
+```
+
+It also returns the **standard error**, the typical size of its own error,
+computed from how spread out the sampled values are (`(b-a) * std(f) / sqrt(N)`),
+so no exact answer is needed to know how reliable the estimate is.
+
+The error follows the **1/sqrt(N) law**: 100 times more points give only 10
+times less error. In the output the column "std error x sqrt(N)" is constant
+(about 0.49, which is the spread of e^x on [0, 1]). The actual error is random,
+so it wobbles around the std error, but it is typically that size.
+
+In one dimension Monte Carlo loses clearly: Simpson with 1000 slices has an
+error near 1e-14, Monte Carlo with a million points about 5e-4. Its advantage
+only appears when the dimension grows.
+
+## 5. Part 3: n variables, gradient and hypervolume
+
+### Gradient (`gradient`)
+The gradient is the list of partial derivatives. Each is a central difference
+along one axis, so it costs **2n evaluations of f**, which is cheap in any
+dimension. Checks:
+
+- `f(x,y,z) = x*y*z + sin(x)` at (0.7, -1.2, 2.5): the numerical gradient equals
+  the exact one to all printed digits.
+- `f = x1^2 + ... + x100^2` in 100 dimensions: the gradient is `2x`; the largest
+  error over the 100 components is 2.5e-10, from only 200 evaluations.
+
+### Hypervolume (`integral`)
+`integral(f, low, high, steps)` is the grid method of part 5 (section 7). Here
+it computes the **volume of the unit ball** with f = 1 inside and 0 outside:
+
+| dim | grid | boxes | grid result | exact |
+|---|---|---|---|---|
+| 2 | 400^2 | 160,000 | 3.14190 | 3.14159 |
+| 3 | 60^3 | 216,000 | 4.18904 | 4.18879 |
+| 4 | 20^4 | 160,000 | 4.96480 | 4.93480 |
+
+(The exact volume is `pi^(n/2) / Gamma(n/2 + 1)`.) A grid is only roughly right
+along a curved edge, because boxes cut by the edge are counted whole or not at
+all. More importantly, the number of boxes is `k^n`, so the same ball in 10
+dimensions with just 10 slices per side would need 10,000,000,000 boxes.
+
+## 6. Part 4: n variables, Monte Carlo (`mc_integral`)
+
+Same idea as part 2, in a box:
+
+```
+integral ~ (volume of the box) * average of f at N random points of the box
+```
+
+- Integral of `x^2+y^2+z^2` over the unit cube with 200,000 points:
+  0.99936 +- 0.00115 (exact 1).
+- Volume of the unit ball, 1,000,000 random points in the cube `[-1, 1]^n`:
+
+| dim | MC estimate | +- std error | exact |
+|---|---|---|---|
+| 2 | 3.13904 | 0.00164 | 3.14159 |
+| 3 | 4.19034 | 0.00400 | 4.18879 |
+| 5 | 5.28186 | 0.01188 | 5.26379 |
+| 10 | 2.56205 | 0.05116 | 2.55016 |
+
+Every estimate is within two standard errors of the exact value. In 10
+dimensions only 2,502 of the million points land inside the ball (about 1 in
+400, since the ball is a tiny part of the cube), so that estimate is noisier
+(std error about 2% of the answer). That is the weak spot of Monte Carlo: rare
+events need many points. It still works where a grid cannot even be built.
+
+## 7. Part 5: `integral(f, low, high)` with a Riemann sum
+
+```python
+# simplified: the real function also supports rule='left' (f at the lowest corner of each box)
+def integral(f, low, high, steps=10, rule='mid', max_points=50_000_000):
+    n = len(low)                                   # the number of variables
+    widths = [(hi - lo) / steps for lo, hi in zip(low, high)]
+    axes = [[lo + (i + 0.5) * w for i in range(steps)] for lo, w in zip(low, widths)]
+    total = 0.0
+    for point in itertools.product(*axes):         # every small box of the grid
+        total += f(point)
+    return total * math.prod(widths)               # f times the volume of one small box
+```
+
+Every side of the box is cut into `steps` slices, so the box is cut into
+`steps^n` small boxes; f is evaluated once in the middle of each and multiplied
+by the volume of one small box. `f` receives the point as a tuple of n numbers,
+so the same function handles any dimension:
+`integral(lambda x: sum(v*v for v in x), [0, 0], [1, 1])`.
+`max_points` makes the function raise `TooManyPoints` instead of starting a grid
+that would never finish.
+
+### 7.1 Results, f = x1^2 + ... + xn^2 on [0,1]^n
+
+| dim | steps | boxes | result | exact n/3 | error |
+|---|---|---|---|---|---|
+| 1 | 1000 | 1,000 | 0.33333325 | 0.333333 | -8.33e-08 |
+| 2 | 1000 | 1,000,000 | 0.66666650 | 0.666667 | -1.67e-07 |
+| 5 | 20 | 3,200,000 | 1.66562500 | 1.666667 | -1.04e-03 |
+| 100 | (impossible) | 2^100 ~ 1.3e30 even with 2 steps | refused | 33.3333 | |
+
+**The numbers are not just close, they are exactly what the maths predicts.**
+For this f the midpoint rule is off by exactly `n/(12*steps^2)`, so the result
+must be `n * (1/3 - 1/(12*steps^2))`. The program checks that its results match
+this formula to 9 digits in 1, 2 and 5 dimensions.
+
+**100 dimensions cannot be done with a grid.** Even 2 slices per side gives
+2^100 ~ 1.3e30 boxes. At the speed measured in the 5-D run (about 3 million
+evaluations per second) that is of the order of 10^16 years, so the program
+refuses and prints this estimate instead. The only grid it can afford is a
+single box (`steps=1`), which evaluates f at the centre and gives 25.0 instead
+of 33.33: 25% off, with no way to improve it.
+
+### Why: the curse of dimensionality
+
+The cost is `steps^n`, and the accuracy per dimension only improves like
+`1/steps^2`. To divide the error by 10 the midpoint grid needs about `sqrt(10)`
+times more slices per side, i.e. `10^(n/2)` times more boxes: a factor of about
+316 in 5 dimensions and 10^50 in 100. The table in the output shows the number
+of boxes for 10 steps: 10^5 in 5-D (a fraction of a second), 10^10 in 10-D
+(about an hour), 10^20 in 20-D (about a million years), 10^100 in 100-D.
+
+### 7.2 The same with Monte Carlo (100,000 random points)
+
+| dim | estimate | +- std error | exact n/3 | std err / exact |
+|---|---|---|---|---|
+| 1 | 0.33342 | 0.00094 | 0.33333 | 0.283% |
+| 2 | 0.66541 | 0.00134 | 0.66667 | 0.200% |
+| 5 | 1.66690 | 0.00210 | 1.66667 | 0.126% |
+| 100 | 33.32002 | 0.00941 | 33.33333 | 0.028% |
+
+The same *number* of points (100,000) handles all four dimensions. 100
+dimensions only cost more time per point (each point has 100 numbers instead of
+1: about a second in total), and the result is 0.04% off, where the Riemann sum
+could not even start. The last column is the error to *expect* relative to the
+answer; it *falls* as the dimension grows, because the answer grows like n while
+the spread of f grows only like sqrt(n). The second table in the output shows
+the 100-D error improving with more points (std error 0.26, 0.091, 0.029, 0.0095
+for 100, 1,000, 10,000, 100,000 points): the 1/sqrt(N) law again.
+
+## 8. Riemann sum vs Monte Carlo
+
+| | Riemann sum (grid) | Monte Carlo |
+|---|---|---|
+| Evaluations of f | `steps^n`, explodes with n | `N`, you choose it |
+| Error | ~ 1/steps^2 per dimension (smooth f) | ~ 1/sqrt(N) in **any** dimension |
+| Best for | 1 to 3 dimensions, smooth f | many dimensions, rough f, shapes (indicator functions) |
+| Weak spot | the curse of dimensionality | slow 1/sqrt(N) convergence; rare events need many points |
+| Error information | needs smoothness to be accurate | reports its own standard error |
+
+In one dimension the grid (especially Simpson) is far better; in 100 dimensions
+only Monte Carlo is possible. The crossover is the lesson of part 5.
+
+## 9. Actual output
+
+```
+==============================================================================
+PART 1   one variable: numerical derivative and integral
+==============================================================================
+
+Derivative of sin(x) at x = 1   (exact value cos(1) = 0.540302305868)
+         h     forward diff       error     central diff       error
+  ----------------------------------------------------------------
+     1e-01     0.4973637525    4.29e-02     0.5394022522    9.00e-04
+     1e-02     0.5360859810    4.22e-03     0.5402933009    9.00e-06
+     1e-03     0.5398814804    4.21e-04     0.5403022158    9.01e-08
+     1e-04     0.5402602314    4.21e-05     0.5403023050    9.00e-10
+     1e-05     0.5402980985    4.21e-06     0.5403023059    1.11e-11
+     1e-06     0.5403018851    4.21e-07     0.5403023059    2.77e-11
+     1e-07     0.5403022640    4.18e-08     0.5403023057    1.94e-10
+     1e-08     0.5403023029    2.97e-09     0.5403023084    2.58e-09
+     1e-09     0.5403023584    5.25e-08     0.5403023029    2.97e-09
+     1e-10     0.5403022474    5.85e-08     0.5403022474    5.85e-08
+     1e-11     0.5403011372    1.17e-06     0.5403011372    1.17e-06
+     1e-12     0.5403455461    4.32e-05     0.5402900349    1.23e-05
+  The forward error shrinks like h and the central error like h^2, until rounding noise takes
+  over: for the central difference below h = 1e-5, for the forward one below about 1e-8, making
+  h smaller makes things WORSE. Smallest central error here: 1.1e-11 at h = 1e-05.
+  (The default h = 1e-5 is a safe choice.)
+
+Integral of e^x from 0 to 1   (exact value e - 1 = 1.718281828459)
+   slices           left            mid      trapezoid        simpson      <- absolute error
+  --------------------------------------------------------------------
+       10       8.45e-02       7.16e-04       1.43e-03       9.53e-07
+      100       8.58e-03       7.16e-06       1.43e-05       9.55e-11
+     1000       8.59e-04       7.16e-08       1.43e-07       9.77e-15
+  Error divided by this when the slices grow 10x (the "order" of the rule):
+    left               10x   -> about 10^1
+    mid               100x   -> about 10^2
+    trapezoid         100x   -> about 10^2
+    simpson          9771x   -> about 10^4
+  left: error ~ 1/n.  mid and trapezoid: ~ 1/n^2.  Simpson: ~ 1/n^4.
+  (sin on [0, pi] would hide the first line: sin is 0 at both ends, which makes the left
+  sum equal the trapezoid sum. e^x has different ends, so every rule shows its true order.)
+
+==============================================================================
+PART 2   one variable: Monte Carlo integral
+==============================================================================
+
+Same integral, e^x from 0 to 1 (exact e - 1 = 1.718282), with random points:
+    samples    estimate   abs error   std error  std err*sqrt(N)
+  --------------------------------------------------------------
+        100     1.76890     0.05062     0.04515           0.4515
+      1,000     1.71139     0.00689     0.01533           0.4847
+     10,000     1.70500     0.01328     0.00489           0.4892
+    100,000     1.71738     0.00090     0.00155           0.4915
+  1,000,000     1.71775     0.00053     0.00049           0.4917
+  The std error falls like 1/sqrt(N): 100x more points buy only 10x less error (the last column,
+  std error * sqrt(N), is constant: it is the spread of f). The actual error is random, so it
+  wobbles around the std error from row to row, but it is typically that size.
+  The std error is the program's own estimate of its error, computed from the spread of the
+  samples, so it needs no exact answer.
+  Compared with part 1: Simpson with 1000 slices has error 1e-14; Monte Carlo with
+  a million points has about 5e-4. In ONE dimension it cannot compete. Its strength only
+  shows when the dimension grows (parts 4 and 5).
+
+==============================================================================
+PART 3   n variables: gradient and hypervolume
+==============================================================================
+
+Gradient of f(x,y,z) = x*y*z + sin(x) at (0.7, -1.2, 2.5):
+  numerical : [-2.23515781, 1.75, -0.84]
+  exact     : [-2.23515781, 1.75, -0.84]
+
+Gradient of f(x) = x1^2+...+x100^2 in 100 dimensions (exact gradient is 2x):
+  largest error over the 100 components: 2.5e-10.  It took only 200 evaluations of f.
+  A derivative costs 2n evaluations, so it stays cheap in any dimension. The integral does not (below).
+
+Hypervolume = the integral of f over a box. With f = 1 on the inside of a shape and 0
+outside, it is the shape's volume. Volume of the unit ball with a grid of small boxes:
+   dim     grid     boxes   grid result     exact     error
+  ----------------------------------------------------------
+     2   400^2   160,000       3.14190   3.14159   0.00031
+     3    60^3   216,000       4.18904   4.18879   0.00025
+     4    20^4   160,000       4.96480   4.93480   0.03000
+  A grid hugging a curved edge is only roughly right (the edge cuts boxes in half); and
+  the number of boxes is k^n. The same ball in 10 dimensions with just 10 slices per side
+  would already need 10^10 = 10,000,000,000 boxes.
+
+==============================================================================
+PART 4   n variables: Monte Carlo integral (hypervolume)
+==============================================================================
+
+Integral of x^2+y^2+z^2 over the unit cube, 200,000 random points: 0.99936 +- 0.00115   (exact 1)
+
+Volume of the unit ball (random points in the cube [-1,1]^n, 1,000,000 points each):
+   dim   MC estimate  +- std error     exact     error  points that hit
+  ----------------------------------------------------------------------
+     2       3.13904       0.00164   3.14159  -0.00255          784,761
+     3       4.19034       0.00400   4.18879   0.00155          523,792
+     5       5.28186       0.01188   5.26379   0.01807          165,058
+    10       2.56205       0.05116   2.55016   0.01188            2,502
+  In 10 dimensions only about 1 point in 400 lands inside the ball, so the estimate is noisier:
+  its std error is about 2% of the answer. Monte Carlo still works where a grid cannot be built.
+
+==============================================================================
+PART 5   integral(f, low, high) for n variables
+==============================================================================
+
+f(x) = x1^2 + ... + xn^2 over the box [0,1]^n  (low = 0 and high = 1 in every dimension).
+Exact answer: n/3, because each term integrates to 1/3.
+
+--- 5.1  Riemann sum (midpoint rule) ---
+   dim  steps           boxes        result   exact n/3       error   seconds
+  -----------------------------------------------------------------------------
+     1   1000           1,000    0.33333325    0.333333   -8.33e-08      0.00
+     2   1000       1,000,000    0.66666650    0.666667   -1.67e-07      0.27
+     5     20       3,200,000    1.66562500    1.666667   -1.04e-03      1.08
+  For this f the midpoint rule is off by exactly -n/(12*steps^2), and the results match that
+  formula to 9 digits, so the program does what the maths says.
+
+  100 dimensions:
+  steps=2 (just TWO slices per side) -> 1.27e+30 grid points: refused. At the speed measured in the 5-D run
+  (2,964,975 evaluations per second) that is about 1.4e+16 years of computing.
+  The only grid that can be afforded is steps=1 (a single box, f at its centre): 25.0000  vs exact 33.3333  -> 25% off, and no way to refine it.
+
+  Why: the number of boxes is steps^n.
+     dim     boxes with 10 steps        time at that speed
+  --------------------------------------------------------
+       1                      10                 3.4e-06 s
+       2                     100                 3.4e-05 s
+       5                 100,000                   0.034 s
+      10                   1e+10                0.039 days
+      20                   1e+20             1.1e+06 years
+     100                  1e+100             1.1e+86 years
+
+--- 5.2  Monte Carlo (100,000 random points each) ---
+  The error of Monte Carlo shrinks like 1/sqrt(N) in EVERY dimension. What changes with n is only
+  how spread out f is: here the spread grows like sqrt(n) while the answer grows like n, so the
+  relative error even gets smaller in higher dimensions.
+   dim    estimate  +- std error   exact n/3   abs error  rel error  std err/exact  seconds
+  -----------------------------------------------------------------------------------------
+     1     0.33342       0.00094     0.33333     0.00008     0.025%         0.283%     0.06
+     2     0.66541       0.00134     0.66667     0.00125     0.188%         0.200%     0.07
+     5     1.66690       0.00210     1.66667     0.00023     0.014%         0.126%     0.11
+   100    33.32002       0.00941    33.33333     0.01331     0.040%         0.028%     1.15
+  "rel error" is what happened in this one run; "std err/exact" is the size of error to EXPECT, and it
+  does fall with the dimension (the single runs wobble around it).
+  The same number of points (100,000) handles 100 dimensions: 1.2 s (each point just has 100 numbers
+  instead of 1) and 0.04% off, where the Riemann sum could not even start.
+
+  How the 100-D estimate improves with more points (exact 33.33333):
+      points    estimate   abs error   std error
+  ----------------------------------------------
+         100     33.3654      0.0320      0.2636
+       1,000     33.3740      0.0407      0.0914
+      10,000     33.3383      0.0050      0.0293
+     100,000     33.3378      0.0044      0.0095
+
+  Riemann sum vs Monte Carlo, in short:
+    cost         Riemann: steps^n evaluations (explodes)     Monte Carlo: N evaluations, you choose
+    error        Riemann: ~ 1/steps^2, great in 1-3 dims      Monte Carlo: ~ 1/sqrt(N), any dimension
+    error info   Riemann: needs smoothness to be accurate     Monte Carlo: reports its own std error
+
+==============================================================================
+SELF-CHECK: 27 of 27 comparisons with exact values passed
+==============================================================================
+```
+
+The `seconds` columns depend on the computer. Everything else is identical on
+every run.
+
+## 10. Checks, corrections and limitations
+
+**Checks.** The program ends with a self-check: 27 comparisons of a result with
+an exact value (known derivatives, exact integrals, the ball volume formula, the
+predicted grid error `n*(1/3 - 1/(12*steps^2))`). For Monte Carlo the check is
+"within 4 standard errors". All 27 pass.
+
+**Corrections made while building it.** Three explanations in the first
+version were wrong or sloppy and were fixed after reading the output:
+
+1. The left rule looked like order 2 on sin over [0, pi] because of the
+   coincidence described in section 3; the test integral was changed to e^x on [0, 1].
+2. It claimed "error x sqrt(N) stays constant" for Monte Carlo, but that
+   column wobbles because the error is random; the constant quantity is
+   "std error x sqrt(N)", which is what the table now shows.
+3. It said the Monte Carlo error does not depend on the dimension; the
+   *rate* 1/sqrt(N) does not, but the spread of f does (and here grows with n).
+   The new "std err / exact" column shows the effect.
+
+**Limitations.**
+- The Riemann sum uses the same number of slices in every dimension and only
+  the midpoint and left rules.
+- The 100-D Riemann time is an extrapolation from the measured speed, not a
+  measurement; it is only meant to show the order of magnitude.
+- Timings come from one machine and differ on others. Pure Python was used on
+  purpose, so nothing has to be installed; NumPy would be much faster.
