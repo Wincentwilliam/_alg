@@ -1,3 +1,7 @@
+# AI disclosure:
+# This program was written with the help of Claude (Anthropic AI).
+# The author has read, run, and understood all of it.
+#
 # Homework 10: derivatives and integrals computed with numbers, not with algebra.
 #
 #   1. one variable : numerical derivative and integral
@@ -63,6 +67,8 @@ def mc_integral_1d(f, a, b, samples, rng):
     Average f at random points of [a, b], times the length of the interval.
     Also returns the standard error, the typical size of the error of this estimate.
     """
+    if samples < 2:
+        raise ValueError('Monte Carlo needs at least 2 samples')
     total = total_sq = 0.0
     for _ in range(samples):
         v = f(a + (b - a) * rng.random())
@@ -122,6 +128,8 @@ def mc_integral(f, low, high, samples, rng):
     Monte Carlo over the same box: average f at random points of the box and
     multiply by the volume of the box. Returns (estimate, standard error).
     """
+    if samples < 2:
+        raise ValueError('Monte Carlo needs at least 2 samples')
     spans = [hi - lo for lo, hi in zip(low, high)]
     volume = math.prod(spans)
     total = total_sq = 0.0
@@ -225,7 +233,7 @@ if __name__ == '__main__':
     print('  The std error is the program\'s own estimate of its error, computed from the spread of the')
     print('  samples, so it needs no exact answer.')
     print(f'  Compared with part 1: Simpson with 1000 slices has error {errors[("simpson", 1000)]:.0e}; Monte Carlo with')
-    print('  a million points has about 1e-3. In ONE dimension it cannot compete. Its strength only')
+    print('  a million points has about 5e-4. In ONE dimension it cannot compete. Its strength only')
     print('  shows when the dimension grows (parts 4 and 5).')
 
     # ------------------------------------------------ part 3
@@ -278,7 +286,6 @@ if __name__ == '__main__':
     print(f'  {"dim":>4}{"MC estimate":>14}{"+- std error":>14}{"exact":>10}{"error":>10}{"points that hit":>17}')
     print('  ' + '-' * 70)
     for dim in (2, 3, 5, 10):
-        t = time.perf_counter()
         est, se = mc_integral(inside_unit_ball, [-1] * dim, [1] * dim, 1_000_000, rng)
         ex = unit_ball_volume(dim)
         hits = round(est / 2 ** dim * 1_000_000)
@@ -354,7 +361,7 @@ if __name__ == '__main__':
         print(f'  {dim:>4}{est:>12.5f}{se:>14.5f}{ex:>12.5f}{abs(est - ex):>12.5f}{abs(est - ex) / ex:>11.3%}{se / ex:>15.3%}{secs:>9.2f}')
     print('  "rel error" is what happened in this one run; "std err/exact" is the size of error to EXPECT, and it')
     print('  does fall with the dimension (the single runs wobble around it).')
-    print(f'  The same 100,000 points handle 100 dimensions: {mc_rows[100][0]:.1f} s (each point just has 100 numbers')
+    print(f'  The same number of points (100,000) handles 100 dimensions: {mc_rows[100][0]:.1f} s (each point just has 100 numbers')
     print(f'  instead of 1) and {mc_rows[100][1]:.2%} off, where the Riemann sum could not even start.')
 
     print('\n  How the 100-D estimate improves with more points (exact 33.33333):')

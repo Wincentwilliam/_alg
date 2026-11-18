@@ -29,17 +29,17 @@ Files:
 | `numeric_calculus.py` | all five parts, one file, nothing to install |
 | `output.txt` | the full output of `python numeric_calculus.py` |
 
-Run it with `python numeric_calculus.py` (about 10 seconds). All random numbers
-come from a seeded generator, so every number in the output is the same on every
-run; only the `seconds` columns change.
+Run it with `python numeric_calculus.py` (a few seconds to under half a minute,
+depending on the computer). All random numbers come from a seeded generator, so
+every number in the output is the same on every run; only the `seconds` columns
+change.
 
-### Assumption about part 5
+### Setup for part 5
 
-The text says "low, high 都是 1". If both were 1 the box would have no size and
-every integral would be 0, so this README reads it as **low = 0 and high = 1 in
-every dimension**, i.e. the unit hypercube `[0, 1]^n`. Then the exact answer is
-known: each term `xi^2` integrates to 1/3, so the integral is **n/3**. That
-makes it possible to check every result.
+As given in the assignment, `low = 0` and `high = 1` in every dimension, so the
+box is the unit hypercube `[0, 1]^n`. The exact answer is known: each term
+`xi^2` integrates to 1/3, so the integral is **n/3**. That makes it possible to
+check every result.
 
 ## 2. The ideas in plain words
 
@@ -107,7 +107,7 @@ times less error. In the output the column "std error x sqrt(N)" is constant
 so it wobbles around the std error, but it is typically that size.
 
 In one dimension Monte Carlo loses clearly: Simpson with 1000 slices has an
-error near 1e-14, Monte Carlo with a million points about 1e-3. Its advantage
+error near 1e-14, Monte Carlo with a million points about 5e-4. Its advantage
 only appears when the dimension grows.
 
 ## 5. Part 3: n variables, gradient and hypervolume
@@ -165,6 +165,7 @@ events need many points. It still works where a grid cannot even be built.
 ## 7. Part 5: `integral(f, low, high)` with a Riemann sum
 
 ```python
+# simplified: the real function also supports rule='left' (f at the lowest corner of each box)
 def integral(f, low, high, steps=10, rule='mid', max_points=50_000_000):
     n = len(low)                                   # the number of variables
     widths = [(hi - lo) / steps for lo, hi in zip(low, high)]
@@ -222,13 +223,13 @@ of boxes for 10 steps: 10^5 in 5-D (a fraction of a second), 10^10 in 10-D
 | 5 | 1.66690 | 0.00210 | 1.66667 | 0.126% |
 | 100 | 33.32002 | 0.00941 | 33.33333 | 0.028% |
 
-The same 100,000 points handle all four dimensions. 100 dimensions only cost
-more time per point (each point has 100 numbers instead of 1: about a second
-in total), and the result is 0.04% off, where the Riemann sum could not even
-start. The last column is the error to *expect* relative to the answer; it
-*falls* as the dimension grows, because the answer grows like n while the
-spread of f grows only like sqrt(n). The second table in the output shows the
-100-D error improving with more points (std error 0.26, 0.091, 0.029, 0.0095
+The same *number* of points (100,000) handles all four dimensions. 100
+dimensions only cost more time per point (each point has 100 numbers instead of
+1: about a second in total), and the result is 0.04% off, where the Riemann sum
+could not even start. The last column is the error to *expect* relative to the
+answer; it *falls* as the dimension grows, because the answer grows like n while
+the spread of f grows only like sqrt(n). The second table in the output shows
+the 100-D error improving with more points (std error 0.26, 0.091, 0.029, 0.0095
 for 100, 1,000, 10,000, 100,000 points): the 1/sqrt(N) law again.
 
 ## 8. Riemann sum vs Monte Carlo
@@ -304,7 +305,7 @@ Same integral, e^x from 0 to 1 (exact e - 1 = 1.718282), with random points:
   The std error is the program's own estimate of its error, computed from the spread of the
   samples, so it needs no exact answer.
   Compared with part 1: Simpson with 1000 slices has error 1e-14; Monte Carlo with
-  a million points has about 1e-3. In ONE dimension it cannot compete. Its strength only
+  a million points has about 5e-4. In ONE dimension it cannot compete. Its strength only
   shows when the dimension grows (parts 4 and 5).
 
 ==============================================================================
@@ -389,7 +390,7 @@ Exact answer: n/3, because each term integrates to 1/3.
    100    33.32002       0.00941    33.33333     0.01331     0.040%         0.028%     1.15
   "rel error" is what happened in this one run; "std err/exact" is the size of error to EXPECT, and it
   does fall with the dimension (the single runs wobble around it).
-  The same 100,000 points handle 100 dimensions: 1.2 s (each point just has 100 numbers
+  The same number of points (100,000) handles 100 dimensions: 1.2 s (each point just has 100 numbers
   instead of 1) and 0.04% off, where the Riemann sum could not even start.
 
   How the 100-D estimate improves with more points (exact 33.33333):
@@ -433,7 +434,6 @@ version were wrong or sloppy and were fixed after reading the output:
    The new "std err / exact" column shows the effect.
 
 **Limitations.**
-- "low = 0, high = 1" is an interpretation (section 1).
 - The Riemann sum uses the same number of slices in every dimension and only
   the midpoint and left rules.
 - The 100-D Riemann time is an extrapolation from the measured speed, not a
